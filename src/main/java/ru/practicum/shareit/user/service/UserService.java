@@ -101,7 +101,7 @@ public class UserService {
         if (user.getEmail() != null) {
             for (User userFromStorage : userStorage.getUsers().values()) {
                 if (userFromStorage.getEmail().equals(user.getEmail())) {
-                    if (userFromStorage.getId() != id) {
+                    if (userFromStorage.getId().equals(id)) {
                         log.info("email уже существует: {}", user.getEmail());
                         throw new EmailDuplicateException("email уже существует.");
                     }

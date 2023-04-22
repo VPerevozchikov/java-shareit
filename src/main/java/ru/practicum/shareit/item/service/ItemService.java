@@ -61,7 +61,7 @@ public class ItemService {
         } else {
             List<Item> items = new ArrayList<>();
             for (Item item : itemStorage.getItems().values()) {
-                if (item.getOwener() == userId) {
+                if (item.getOwener().equals(userId)) {
                     items.add(item);
                 }
             }
@@ -147,7 +147,7 @@ public class ItemService {
         }
 
         Item itemFromStorage = itemStorage.getItems().get(id);
-        if (itemFromStorage.getOwener() != userId) {
+        if (itemFromStorage.getOwener().equals(userId)) {
             throw new NotFoundException(String.format(
                     "Вещь c id %s не принадлежит User c id %s", id, userId));
         }
