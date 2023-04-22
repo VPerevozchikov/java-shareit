@@ -1,26 +1,25 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.user.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-public class Item {
+public class UserDto {
     Long id;
+
+    @NotNull
     @NotBlank
     String name;
-    @NotBlank
-    String description;
-    Boolean available;
-    Long owener;
-    Long request;
+
+    @Email
+    String email;
 }
