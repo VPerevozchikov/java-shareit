@@ -12,6 +12,7 @@ import ru.practicum.shareit.user.storage.UserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ItemService {
@@ -147,7 +148,7 @@ public class ItemService {
         }
 
         Item itemFromStorage = itemStorage.getItems().get(id);
-        if (itemFromStorage.getOwener().equals(userId)) {
+        if (!Objects.equals(itemFromStorage.getOwener(), userId)) {
             throw new NotFoundException(String.format(
                     "Вещь c id %s не принадлежит User c id %s", id, userId));
         }

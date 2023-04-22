@@ -12,6 +12,7 @@ import ru.practicum.shareit.user.storage.UserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserService {
@@ -101,7 +102,7 @@ public class UserService {
         if (user.getEmail() != null) {
             for (User userFromStorage : userStorage.getUsers().values()) {
                 if (userFromStorage.getEmail().equals(user.getEmail())) {
-                    if (userFromStorage.getId().equals(id)) {
+                    if (!Objects.equals(userFromStorage.getId(), id)) {
                         log.info("email уже существует: {}", user.getEmail());
                         throw new EmailDuplicateException("email уже существует.");
                     }
