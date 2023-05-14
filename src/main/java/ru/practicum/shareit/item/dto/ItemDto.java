@@ -4,29 +4,38 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.stereotype.Component;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.user.model.User;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@Component
 public class ItemDto {
     Long id;
     @NotNull
     @NotBlank
     String name;
-    @Size(min = 1, max = 200)
     String description;
-    boolean available;
-    Long owener;
+    Boolean available;
+    User user;
     Long request;
+    BookingDto lastBooking;
+    BookingDto nextBooking;
+    List<CommentDto> comments;
+
+    public ItemDto(Long id, String name, String description,
+                   boolean available, User user, Long request) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.available = available;
+        this.user = user;
+        this.request = request;
+    }
 
 }
