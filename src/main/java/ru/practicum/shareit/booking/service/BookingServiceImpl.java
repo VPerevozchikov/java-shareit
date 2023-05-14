@@ -244,7 +244,7 @@ public class BookingServiceImpl implements BookingService {
                     "Значение даты окончания равно дате старта"));
         }
 
-        if (userId == item.get().getUser().getId()) {
+        if (userId.equals(item.get().getUser().getId())) {
             log.info("Валидация новой брони. Попытка создань бронь владельца вещи на собственную вещь");
             throw new NotFoundException(String.format(
                     "Попытка создань бронь владельца вещи на собственную вещь"));
