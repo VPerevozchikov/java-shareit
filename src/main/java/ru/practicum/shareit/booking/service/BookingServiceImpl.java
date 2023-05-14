@@ -267,7 +267,7 @@ public class BookingServiceImpl implements BookingService {
 
         Long ownerId = item.get().getUser().getId();
 
-        if (userId != ownerId) {
+        if (!userId.equals(ownerId)) {
             throw new NotFoundException(String.format(
                     "Хозяин вещи не соотвествует брони"));
         }
@@ -297,7 +297,7 @@ public class BookingServiceImpl implements BookingService {
         Long ownerBookingId = booking.get().getBooker().getId();
         Long ownerItemId = item.get().getUser().getId();
 
-        if (userId != ownerBookingId && userId != ownerItemId) {
+        if (!userId.equals(ownerBookingId) && !userId.equals(ownerItemId)) {
             throw new NotFoundException(String.format(
                     "Хозяин вещи не соотвествует брони"));
         }

@@ -84,7 +84,7 @@ public class ItemService {
             List<Optional<Booking>> listOfBookingsOptional = bookingRepository.findBookingByItemIdOrderByStartDesc(id);
             List<Booking> listOfBookings = new ArrayList<>();
             for (Optional<Booking> booking : listOfBookingsOptional) {
-                if (user.get().getId() == item.get().getUser().getId()) {
+                if (user.get().getId().equals(item.get().getUser().getId())) {
                     listOfBookings.add(bookingMapper.toBooking(booking));
                 }
             }
@@ -324,7 +324,7 @@ public class ItemService {
 
         for (Optional<Booking> bookingOptional : bookings) {
             Long itemIdFromBooking = bookingOptional.get().getItemId();
-            if (itemIdFromBooking == itemId) {
+            if (itemIdFromBooking.equals(itemId)) {
                 if (bookingOptional.get().getEnd().isBefore(LocalDateTime.now())) {
                     isUserEndUsedItem = true;
                     booking = bookingMapper.toBooking(bookingOptional);
