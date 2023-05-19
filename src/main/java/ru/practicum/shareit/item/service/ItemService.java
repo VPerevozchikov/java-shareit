@@ -2,14 +2,13 @@ package ru.practicum.shareit.item.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.StatusType;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.repositories.BookingRepository;
+import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.booking.service.BookingServiceImpl;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.CommentCreationDto;
@@ -22,9 +21,8 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repositories.CommentRepository;
 import ru.practicum.shareit.item.repositories.ItemRepository;
-import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.repositories.UserRepository;
+import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -34,13 +32,11 @@ public class ItemService {
     private static final Logger log = LoggerFactory.getLogger(ItemService.class);
 
     ItemRepository itemRepository;
-    BookingRepository bookingRepository;
-    UserRepository userRepository;
     CommentRepository commentRepository;
     ItemMapper itemMapper;
     BookingMapper bookingMapper;
-    UserMapper userMapper;
-    CommentMapper commentMapper;
+    UserService userService;
+    BookingService bookingService;
     Long countComment = 0L;
     Comparator<ItemDto> comparator = new Comparator<ItemDto>() {
         @Override
@@ -49,43 +45,41 @@ public class ItemService {
         }
     };
 
-
-    @Autowired
-    public ItemService(ItemRepository itemRepository, UserRepository userRepository,
-                       BookingRepository bookingRepository, CommentRepository commentRepository,
-                       ItemMapper itemMapper, UserMapper userMapper,
-                       BookingMapper bookingMapper, CommentMapper commentMapper) {
+    public ItemService(ItemRepository itemRepository,
+                       CommentRepository commentRepository,
+                       ItemMapper itemMapper,
+                       BookingMapper bookingMapper,
+                       UserService userService,
+                       BookingServiceImpl bookingService) {
 
         this.itemRepository = itemRepository;
-        this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
         this.commentRepository = commentRepository;
         this.itemMapper = itemMapper;
-        this.userMapper = userMapper;
         this.bookingMapper = bookingMapper;
-        this.commentMapper = commentMapper;
+        this.userService = userService;
+        this.bookingService = bookingService;
     }
 
-    public ResponseEntity<ItemDto> addItem(Long userId, ItemCreationDto itemCreationDto) throws ValidationException {
+    public ItemDto addItem(Long userId, ItemCreationDto itemCreationDto) throws ValidationException {
 
         validate(userId, itemCreationDto);
-        itemCreationDto.setUser(userMapper.toUser(userRepository.findById(userId)));
+        itemCreationDto.setUser(userService.getUserById(userId));
         itemRepository.save(itemMapper.toItem(itemCreationDto));
         ItemDto itemDto = itemMapper.toDto(itemRepository.findByNameContainingIgnoreCase(itemCreationDto.getName()));
-        return new ResponseEntity<>(itemDto, HttpStatus.CREATED);
+        return itemDto;
     }
 
-    public ResponseEntity<ItemDto> getItemById(Long userId, Long id) {
-        Optional<User> user = userRepository.findById(userId);
+    public ItemDto getItemById(Long userId, Long id) {
+        User user = userService.getUserById(userId);
         Optional<Item> item = itemRepository.findById(id);
         if (item.isPresent()) {
 
             ItemDto itemDto = itemMapper.toDto(item);
-            List<Optional<Booking>> listOfBookingsOptional = bookingRepository.findBookingByItemIdOrderByStartDesc(id);
+            List<Booking> listOfBookingsByItemId = bookingService.getBookingsByItemId(id);
             List<Booking> listOfBookings = new ArrayList<>();
-            for (Optional<Booking> booking : listOfBookingsOptional) {
-                if (user.get().getId().equals(item.get().getUser().getId())) {
-                    listOfBookings.add(bookingMapper.toBooking(booking));
+            for (Booking booking : listOfBookingsByItemId) {
+                if (user.getId().equals(item.get().getUser().getId())) {
+                    listOfBookings.add(booking);
                 }
             }
 
@@ -102,13 +96,15 @@ public class ItemService {
                     .orElse(null);
 
             if (lastBooking != null) {
-                itemDto.setLastBooking(bookingMapper.toDto(lastBooking));
+                itemDto.setLastBooking(bookingMapper.toDto(lastBooking,
+                        itemMapper.toItem(itemRepository.findById(lastBooking.getItemId()))));
             } else {
                 itemDto.setLastBooking(null);
             }
 
             if (nextBooking != null) {
-                itemDto.setNextBooking(bookingMapper.toDto(nextBooking));
+                itemDto.setNextBooking(bookingMapper.toDto(nextBooking,
+                        itemMapper.toItem(itemRepository.findById(nextBooking.getItemId()))));
             } else {
                 itemDto.setNextBooking(null);
             }
@@ -117,17 +113,21 @@ public class ItemService {
             List<CommentDto> commentsDto = new ArrayList<>();
 
             for (Comment comment : comments) {
-                CommentDto commentDto = commentMapper.toDto(comment);
+                CommentDto commentDto = CommentMapper.toDto(comment);
                 commentDto.setAuthorName(comment.getAuthor().getName());
                 commentsDto.add(commentDto);
             }
 
             itemDto.setComments(commentsDto);
-            return new ResponseEntity<>(itemDto, HttpStatus.OK);
+            return itemDto;
         } else {
             throw new NotFoundException(String.format(
                     "Вещь не найдена"));
         }
+    }
+
+    public Item getItemById(Long itemId) {
+        return itemMapper.toItem(itemRepository.findById(itemId));
     }
 
     public void deleteItem(Long id) throws NotFoundException {
@@ -141,72 +141,63 @@ public class ItemService {
         }
     }
 
-    public ResponseEntity<Set<ItemDto>> getItemsByUserId(Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-        LocalDateTime localDateTime = LocalDateTime.now();
+    public Set<ItemDto> getItemsByUserId(Long userId) {
+        User user = userService.getUserById(userId);
 
-        if (user.isPresent()) {
-            List<Item> items = itemRepository.findItemsByUser(userMapper.toUser(user));
-            Set<ItemDto> allItemsDtoSortedById = new TreeSet<>(comparator);
-            for (Item item : items) {
-                ItemDto itemDto = itemMapper.toDto(item);
-                List<Optional<Booking>> listOfBookingsOptional = bookingRepository.findBookingByItemIdOrderByStartDesc(item.getId());
-                List<Booking> listOfBookings = new ArrayList<>();
-                for (Optional<Booking> booking : listOfBookingsOptional) {
-                    listOfBookings.add(bookingMapper.toBooking(booking));
-                }
+        List<Item> items = itemRepository.findItemsByUser(user);
+        Set<ItemDto> allItemsDtoSortedById = new TreeSet<>(comparator);
+        for (Item item : items) {
+            ItemDto itemDto = itemMapper.toDto(item);
+            List<Booking> listOfBookings = bookingService.getBookingsByItemId(item.getId());
 
-                Booking lastBooking = listOfBookings.stream()
-                        .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
-                        .filter(booking -> booking.getStatus().equals(StatusType.APPROVED))
-                        .max(Comparator.comparing(Booking::getStart))
-                        .orElse(null);
+            Booking lastBooking = listOfBookings.stream()
+                    .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
+                    .filter(booking -> booking.getStatus().equals(StatusType.APPROVED))
+                    .max(Comparator.comparing(Booking::getStart))
+                    .orElse(null);
 
-                Booking nextBooking = listOfBookings.stream()
-                        .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
-                        .filter(booking -> booking.getStatus().equals(StatusType.APPROVED))
-                        .min(Comparator.comparing(Booking::getStart))
-                        .orElse(null);
+            Booking nextBooking = listOfBookings.stream()
+                    .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
+                    .filter(booking -> booking.getStatus().equals(StatusType.APPROVED))
+                    .min(Comparator.comparing(Booking::getStart))
+                    .orElse(null);
 
-                if (lastBooking != null) {
-                    itemDto.setLastBooking(bookingMapper.toDto(lastBooking));
-                } else {
-                    itemDto.setLastBooking(null);
-                }
-
-                if (nextBooking != null) {
-                    itemDto.setNextBooking(bookingMapper.toDto(nextBooking));
-                } else {
-                    itemDto.setNextBooking(null);
-                }
-
-                List<Comment> comments = commentRepository.findCommentsByItemId(itemDto.getId());
-                List<CommentDto> commentsDto = new ArrayList<>();
-
-                for (Comment comment : comments) {
-                    CommentDto commentDto = commentMapper.toDto(comment);
-                    commentDto.setAuthorName(comment.getAuthor().getName());
-                    commentsDto.add(commentDto);
-                }
-
-                itemDto.setComments(commentsDto);
-
-                allItemsDtoSortedById.add(itemDto);
+            if (lastBooking != null) {
+                itemDto.setLastBooking(bookingMapper.toDto(lastBooking,
+                        itemMapper.toItem(itemRepository.findById(lastBooking.getItemId()))));
+            } else {
+                itemDto.setLastBooking(null);
             }
-            return new ResponseEntity<>(allItemsDtoSortedById, HttpStatus.OK);
-        } else {
-            throw new NotFoundException(String.format(
-                    "Пользователь не найден"));
+
+            if (nextBooking != null) {
+                itemDto.setNextBooking(bookingMapper.toDto(nextBooking,
+                        itemMapper.toItem(itemRepository.findById(nextBooking.getItemId()))));
+            } else {
+                itemDto.setNextBooking(null);
+            }
+
+            List<Comment> comments = commentRepository.findCommentsByItemId(itemDto.getId());
+            List<CommentDto> commentsDto = new ArrayList<>();
+
+            for (Comment comment : comments) {
+                CommentDto commentDto = CommentMapper.toDto(comment);
+                commentDto.setAuthorName(comment.getAuthor().getName());
+                commentsDto.add(commentDto);
+            }
+
+            itemDto.setComments(commentsDto);
+
+            allItemsDtoSortedById.add(itemDto);
         }
+        return allItemsDtoSortedById;
     }
 
-    public ResponseEntity<ItemDto> updateItem(Long userId, Long id, ItemCreationDto itemCreationDto) throws ValidationException {
-        //       validateUpdateItem(userId, id, item);
+    public ItemDto updateItem(Long userId, Long id, ItemCreationDto itemCreationDto) throws ValidationException {
 
-        Optional<User> user = userRepository.findById(userId);
+        User user = userService.getUserById(userId);
         Optional<Item> item = itemRepository.findById(id);
 
-        if (user.isPresent() && item.isPresent()) {
+        if (item.isPresent()) {
             Item updateItem = new Item();
             updateItem.setId(id);
             updateItem.setUser(item.get().getUser());
@@ -232,45 +223,38 @@ public class ItemService {
 
             itemRepository.save(updateItem);
             Optional<Item> itemFromRepository = itemRepository.findById(id);
-            return new ResponseEntity<>(itemMapper.toDto(itemFromRepository), HttpStatus.OK);
+            return itemMapper.toDto(itemFromRepository);
         } else {
             throw new NotFoundException(String.format(
                     "Пользователь и/или вещь не найдены."));
         }
     }
 
-    public ResponseEntity<List<ItemDto>> searchItem(Long userId, String text) {
+    public List<ItemDto> searchItem(Long userId, String text) {
 
-        Optional<User> user = userRepository.findById(userId);
-
-        if (user.isPresent()) {
-            String lowerCaseText = text.toLowerCase();
-            List<ItemDto> itemsDto = new ArrayList<>();
-            if (text.isBlank()) {
-                return new ResponseEntity<>(itemsDto, HttpStatus.OK);
-            } else {
-                List<Optional<Item>> itemsFromRepository = itemRepository.searchItemsByText(text);
-                for (Optional<Item> item : itemsFromRepository) {
-                    if (item.get().getAvailable()) {
-                        itemsDto.add(itemMapper.toDto(item));
-                    }
-                }
-                return new ResponseEntity<>(itemsDto, HttpStatus.OK);
-            }
+        User user = userService.getUserById(userId);
+        List<ItemDto> itemsDto = new ArrayList<>();
+        if (text.isBlank()) {
+            return itemsDto;
         } else {
-            throw new NotFoundException(String.format(
-                    "Пользователь не найден"));
+            List<Optional<Item>> itemsFromRepository = itemRepository.searchItemsByText(text);
+            for (Optional<Item> item : itemsFromRepository) {
+                if (item.get().getAvailable()) {
+                    itemsDto.add(itemMapper.toDto(item));
+                }
+            }
+            return itemsDto;
         }
     }
 
-    public ResponseEntity<CommentDto> addComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) {
+    public CommentDto addComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) {
         validateComment(userId, itemId, commentCreationDto);
         commentCreationDto.setItemId(itemId);
-        commentCreationDto.setAuthor(userMapper.toUser(userRepository.findById(userId)));
-        commentRepository.save(commentMapper.toComment(commentCreationDto));
+        commentCreationDto.setAuthor(userService.getUserById(userId));
+        commentRepository.save(CommentMapper.toComment(commentCreationDto));
         countComment++;
-        CommentDto commentDto = commentMapper.toDto(commentRepository.findById(countComment));
-        return new ResponseEntity<>(commentDto, HttpStatus.OK);
+        CommentDto commentDto = CommentMapper.toDto(commentRepository.findById(countComment));
+        return commentDto;
     }
 
     public void validate(Long userId, ItemCreationDto itemCreationDto) throws ValidationException {
@@ -288,12 +272,7 @@ public class ItemService {
             log.info("Поле available отсутствует.");
             throw new ValidationException("Поле available отсутствует.");
         }
-        Optional<User> user = userRepository.findById(userId);
-
-        if (!user.isPresent()) {
-            throw new NotFoundException(String.format(
-                    "Хозяин вещи не найден"));
-        }
+        User user = userService.getUserById(userId);
     }
 
     public void validateComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) throws ValidationException {
@@ -302,15 +281,7 @@ public class ItemService {
             throw new ValidationException("Поле text отсутствует или пусто.");
         }
 
-        Optional<User> user = userRepository.findById(userId);
-
         Optional<Item> item = itemRepository.findById(itemId);
-
-        if (!user.isPresent()) {
-            log.info("Пользователь не найден");
-            throw new NotFoundException(String.format(
-                    "Пользователь не найден"));
-        }
 
         if (!item.isPresent()) {
             log.info("Вещь не найдена.");
@@ -318,19 +289,12 @@ public class ItemService {
                     "Вещь не найдена"));
         }
 
-        List<Optional<Booking>> bookings = bookingRepository.findBookersByBookerId(userId);
-        Booking booking = new Booking();
+        String state = "PAST";
+        List<BookingDto> bookingsDto = bookingService.getBookingsByBookerId(userId, state);
         boolean isUserEndUsedItem = false;
 
-        for (Optional<Booking> bookingOptional : bookings) {
-            Long itemIdFromBooking = bookingOptional.get().getItemId();
-            if (itemIdFromBooking.equals(itemId)) {
-                if (bookingOptional.get().getEnd().isBefore(LocalDateTime.now())) {
-                    isUserEndUsedItem = true;
-                    booking = bookingMapper.toBooking(bookingOptional);
-                    break;
-                }
-            }
+        if (!bookingsDto.isEmpty()) {
+            isUserEndUsedItem = true;
         }
 
         if (!isUserEndUsedItem) {

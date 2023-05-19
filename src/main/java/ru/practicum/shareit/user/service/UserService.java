@@ -2,8 +2,6 @@ package ru.practicum.shareit.user.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
@@ -28,13 +26,13 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
-    public ResponseEntity<UserDto> addUser(UserCreationDto userCreationDto) throws ValidationException {
+    public UserDto addUser(UserCreationDto userCreationDto) throws ValidationException {
         validateNewUser(userCreationDto);
         userRepository.save(
                 new User(userCreationDto.getName(), userCreationDto.getEmail()));
         UserDto userDto = userMapper.toDto(userRepository.findByEmailContainingIgnoreCase(userCreationDto.getEmail()));
 
-        return new ResponseEntity<>(userDto, HttpStatus.CREATED);
+        return userDto;
     }
 
     public void deleteUser(Long id) throws NotFoundException {
@@ -48,28 +46,39 @@ public class UserService {
         }
     }
 
-    public ResponseEntity<UserDto> getUserById(Long id) throws NotFoundException {
+    public UserDto getUserDtoById(Long id) throws NotFoundException {
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
             UserDto userDto = userMapper.toDto(user);
-            return new ResponseEntity<>(userDto, HttpStatus.OK);
+            return userDto;
         } else {
             throw new NotFoundException(String.format(
                     "Пользователь не найден"));
         }
     }
 
-    public ResponseEntity<List<UserDto>> getUsers() {
+    public User getUserById(Long id) throws NotFoundException {
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userMapper.toUser(userOptional);
+            return user;
+        } else {
+            throw new NotFoundException(String.format(
+                    "Пользователь не найден"));
+        }
+    }
+
+    public List<UserDto> getUsers() {
         List<UserDto> usersDto = new ArrayList<>();
         List<User> users = new ArrayList<>();
         users.addAll(userRepository.findAll());
         for (User user : users) {
             usersDto.add(userMapper.toDto(user));
         }
-        return new ResponseEntity<>(usersDto, HttpStatus.OK);
+        return usersDto;
     }
 
-    public ResponseEntity<UserDto> updateUser(Long id, UserCreationDto userCreationDto) throws ValidationException {
+    public UserDto updateUser(Long id, UserCreationDto userCreationDto) throws ValidationException {
 
         Optional<User> user = userRepository.findById(id);
 
@@ -86,7 +95,7 @@ public class UserService {
             }
             userRepository.save(updateUser);
             UserDto userDto = userMapper.toDto(user);
-            return new ResponseEntity<>(userDto, HttpStatus.OK);
+            return userDto;
         } else {
             throw new NotFoundException(String.format(
                     "Пользователь не найден"));

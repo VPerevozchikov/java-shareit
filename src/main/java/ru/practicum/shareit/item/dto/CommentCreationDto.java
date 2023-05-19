@@ -6,11 +6,16 @@ import lombok.Setter;
 import lombok.ToString;
 import ru.practicum.shareit.user.model.User;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 public class CommentCreationDto {
+    @NotNull
+    @NotBlank
     String text;
     Long itemId;
     User author;

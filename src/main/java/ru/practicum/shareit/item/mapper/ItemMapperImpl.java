@@ -27,6 +27,7 @@ public class ItemMapperImpl implements ItemMapper {
         return itemDto;
     }
 
+
     @Override
     public ItemDto toDto(Optional<Item> item) {
         if (item.isPresent()) {
@@ -57,6 +58,7 @@ public class ItemMapperImpl implements ItemMapper {
         return item;
     }
 
+    @Override
     public Item toItem(Optional<Item> itemFromOptional) {
         Item item = new Item();
         item.setId(itemFromOptional.get().getId());
@@ -67,6 +69,4 @@ public class ItemMapperImpl implements ItemMapper {
         item.setRequest(itemFromOptional.get().getRequest());
         return item;
     }
-
-
 }

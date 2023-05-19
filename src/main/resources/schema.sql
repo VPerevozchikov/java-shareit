@@ -7,15 +7,15 @@ DROP TABLE IF EXISTS COMMENTS CASCADE;
 
 CREATE TABLE IF NOT EXISTS USERS (
     id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
-    name varchar(255) NOT NULL,
-    email varchar(512) NOT NULL,
+    name varchar(100) NOT NULL,
+    email varchar(100) NOT NULL,
     CONSTRAINT pk_user PRIMARY KEY (id),
     CONSTRAINT UQ_USER_EMAIL UNIQUE (email)
 );
 
 CREATE TABLE IF NOT EXISTS ITEMS (
     id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
-    name varchar(255) NOT NULL,
+    name varchar(100) NOT NULL,
     description varchar(512),
     is_available boolean,
     owner_id BIGINT,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS BOOKINGS (
     end_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     item_id BIGINT,
     booker_id BIGINT,
-    status varchar(255),
+    status varchar(20),
     CONSTRAINT pk_booking PRIMARY KEY (id)
 );
 
