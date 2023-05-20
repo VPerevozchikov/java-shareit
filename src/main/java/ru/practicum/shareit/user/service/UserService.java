@@ -2,112 +2,115 @@ package ru.practicum.shareit.user.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.EmailDuplicateException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
+import ru.practicum.shareit.user.dto.UserCreationDto;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.storage.UserStorage;
+import ru.practicum.shareit.user.repositories.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-    private final UserStorage userStorage;
-    private Long userId = 0L;
+    UserRepository userRepository;
+    UserMapper userMapper;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserRepository userRepository, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
     }
 
-    public User addUser(User user) throws ValidationException {
-        validateNewUser(user);
-        user.setId(++userId);
-        userStorage.addUser(user);
-        return user;
+    public UserDto addUser(UserCreationDto userCreationDto) throws ValidationException {
+        validateNewUser(userCreationDto);
+        userRepository.save(
+                new User(userCreationDto.getName(), userCreationDto.getEmail()));
+        UserDto userDto = userMapper.toDto(userRepository.findByEmailContainingIgnoreCase(userCreationDto.getEmail()));
+
+        return userDto;
     }
 
     public void deleteUser(Long id) throws NotFoundException {
-        if (userStorage.getUsers().containsKey(id)) {
-            userStorage.deleteUser(id);
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isPresent()) {
+            userRepository.deleteById(id);
         } else {
             throw new NotFoundException(String.format(
-                    "Пользователь c id %s не найден", id));
+                    "Пользователь не найден"));
+        }
+    }
+
+    public UserDto getUserDtoById(Long id) throws NotFoundException {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()) {
+            UserDto userDto = userMapper.toDto(user);
+            return userDto;
+        } else {
+            throw new NotFoundException(String.format(
+                    "Пользователь не найден"));
         }
     }
 
     public User getUserById(Long id) throws NotFoundException {
-        if (userStorage.getUsers().containsKey(id)) {
-            return userStorage.getUsers().get(id);
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userMapper.toUser(userOptional);
+            return user;
         } else {
             throw new NotFoundException(String.format(
-                    "Пользователь c id %s не найден", id));
+                    "Пользователь не найден"));
         }
     }
 
-    public List<User> getUsers() {
-        return new ArrayList<>(userStorage.getUsers().values());
+    public List<UserDto> getUsers() {
+        List<UserDto> usersDto = new ArrayList<>();
+        List<User> users = new ArrayList<>();
+        users.addAll(userRepository.findAll());
+        for (User user : users) {
+            usersDto.add(userMapper.toDto(user));
+        }
+        return usersDto;
     }
 
-    public User updateUser(Long id, User user) throws ValidationException {
-        validateUpdateUser(id, user);
+    public UserDto updateUser(Long id, UserCreationDto userCreationDto) throws ValidationException {
 
-        User updateUser = userStorage.getUsers().get(id);
-        userStorage.deleteUser(id);
-        if (user.getName() != null) {
-            updateUser.setName(user.getName());
-        }
-        if (user.getEmail() != null) {
-            if (!user.getEmail().isBlank() || user.getEmail().contains("@")) {
-                updateUser.setEmail(user.getEmail());
-            } else {
-                log.info("Ошибка в поле email: {}", user.getEmail());
-                throw new ValidationException("Ошибка в email.");
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isPresent()) {
+            User updateUser = new User();
+            updateUser.setId(id);
+            updateUser.setName(user.get().getName());
+            updateUser.setEmail(user.get().getEmail());
+            if (userCreationDto.getName() != null && !userCreationDto.getName().isBlank()) {
+                updateUser.setName(userCreationDto.getName());
             }
+            if (userCreationDto.getEmail() != null && !userCreationDto.getEmail().isBlank()) {
+                updateUser.setEmail(userCreationDto.getEmail());
+            }
+            userRepository.save(updateUser);
+            UserDto userDto = userMapper.toDto(user);
+            return userDto;
+        } else {
+            throw new NotFoundException(String.format(
+                    "Пользователь не найден"));
         }
-        userStorage.addUser(updateUser);
-
-        return updateUser;
     }
 
-    public void validateNewUser(User user) throws ValidationException {
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.info("Ошибка в поле name{}: ", user.getName());
+    public void validateNewUser(UserCreationDto userCreationDto) throws ValidationException {
+        if (userCreationDto.getName() == null || userCreationDto.getName().isBlank()) {
+            log.info("Ошибка в поле name{}: ", userCreationDto.getName());
             throw new ValidationException("Ошибка в наименовании пользователя.");
         }
 
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.info("Ошибка в поле email: {}", user.getEmail());
+        if (userCreationDto.getEmail() == null || userCreationDto.getEmail().isBlank() || !userCreationDto.getEmail().contains("@")) {
+            log.info("Ошибка в поле email: {}", userCreationDto.getEmail());
             throw new ValidationException("Ошибка в email.");
-        }
-
-        for (User userFromStorage : userStorage.getUsers().values()) {
-            if (userFromStorage.getEmail().equals(user.getEmail())) {
-                log.info("email уже существует: {}", user.getEmail());
-                throw new EmailDuplicateException("email уже существует.");
-            }
-        }
-    }
-
-    public void validateUpdateUser(Long id, User user) throws ValidationException {
-        if (!userStorage.getUsers().containsKey(id)) {
-            log.info("Пользователь с id {} не найден.", id);
-            throw new ValidationException("Пользователь с id {} не найден.");
-        }
-        if (user.getEmail() != null) {
-            for (User userFromStorage : userStorage.getUsers().values()) {
-                if (userFromStorage.getEmail().equals(user.getEmail())) {
-                    if (!Objects.equals(userFromStorage.getId(), id)) {
-                        log.info("email уже существует: {}", user.getEmail());
-                        throw new EmailDuplicateException("email уже существует.");
-                    }
-                }
-            }
         }
     }
 }

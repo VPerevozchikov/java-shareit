@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.controller;
+package ru.practicum.shareit.exceptions;
 
 public class ErrorResponse {
     String error;

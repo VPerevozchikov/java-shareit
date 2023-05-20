@@ -1,12 +1,9 @@
-package ru.practicum.shareit.item.controller;
+package ru.practicum.shareit.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.practicum.shareit.exceptions.EmailDuplicateException;
-import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.exceptions.ValidationException;
 
 @RestControllerAdvice
 public class ErrorHandler {
@@ -23,6 +20,13 @@ public class ErrorHandler {
     public ErrorResponse handleValidationException(final ValidationException e) {
         return new ErrorResponse(
                 String.format("Ошибка в запросе."));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidationBookingStatusException(final ValidationBookingStatusException e) {
+        return new ErrorResponse(
+                String.format("Unknown state: UNSUPPORTED_STATUS"));
     }
 
     @ExceptionHandler
