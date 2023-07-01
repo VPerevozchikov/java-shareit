@@ -23,19 +23,19 @@ public class ItemDto {
     String description;
     Boolean available;
     User user;
-    Long request;
+    Long requestId;
     BookingDto lastBooking;
     BookingDto nextBooking;
     List<CommentDto> comments;
 
     public ItemDto(Long id, String name, String description,
-                   boolean available, User user, Long request) {
+                   boolean available, User user, Long requestId) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.available = available;
         this.user = user;
-        this.request = request;
+        this.requestId = requestId;
     }
 
 }

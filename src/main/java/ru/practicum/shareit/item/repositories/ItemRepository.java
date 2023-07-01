@@ -15,6 +15,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findItemsByUser(User user);
 
+    List<Item> findItemsByRequestId(Long requestId);
+
     @Query(value = "select * from items as it " +
             "where upper(it.name) like upper(concat('%', ?1, '%'))" +
             " or upper (it.description) like upper (concat('%', ?1, '%'))", nativeQuery = true)

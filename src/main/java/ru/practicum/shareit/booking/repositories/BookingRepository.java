@@ -1,5 +1,7 @@
 package ru.practicum.shareit.booking.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,12 +13,16 @@ import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    Booking findByStartEquals(LocalDateTime start);
 
     @Query(value = "select * from bookings as bk " +
             "where bk.booker_id = ? " +
             "order by start_date DESC", nativeQuery = true)
     List<Optional<Booking>> findBookersByBookerId(Long bookerId);
+
+    @Query(value = "select * from bookings as bk " +
+            "where bk.booker_id = ? " +
+            "order by start_date DESC", nativeQuery = true)
+    Page<Booking> findBookersByBookerId(Long bookerId, Pageable pageable);
 
     @Query(value = "select * from bookings as bk " +
             "where bk.booker_id = ?1 " +
@@ -48,6 +54,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "where i.owner_id = ? " +
             "order by bk.start_date DESC", nativeQuery = true)
     List<Optional<Booking>> findBookingsByOwnerId(Long ownerId);
+
+    @Query(value = "select * from bookings as bk " +
+            "join items as i on bk.item_id = i.id " +
+            "where i.owner_id = ? " +
+            "order by bk.start_date DESC", nativeQuery = true)
+    Page<Booking> findBookingsByOwnerId(Long ownerId, Pageable pageable);
 
     @Query(value = "select * from bookings as bk " +
             "join items as i on bk.item_id = i.id " +

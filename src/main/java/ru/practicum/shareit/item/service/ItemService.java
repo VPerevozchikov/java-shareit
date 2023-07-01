@@ -3,12 +3,12 @@ package ru.practicum.shareit.item.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.StatusType;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.booking.service.BookingServiceImpl;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.CommentCreationDto;
@@ -27,6 +27,7 @@ import ru.practicum.shareit.user.service.UserService;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Transactional
 @Service
 public class ItemService {
     private static final Logger log = LoggerFactory.getLogger(ItemService.class);
@@ -50,7 +51,7 @@ public class ItemService {
                        ItemMapper itemMapper,
                        BookingMapper bookingMapper,
                        UserService userService,
-                       BookingServiceImpl bookingService) {
+                       BookingService bookingService) {
 
         this.itemRepository = itemRepository;
         this.commentRepository = commentRepository;
@@ -126,10 +127,6 @@ public class ItemService {
         }
     }
 
-    public Item getItemById(Long itemId) {
-        return itemMapper.toItem(itemRepository.findById(itemId));
-    }
-
     public void deleteItem(Long id) throws NotFoundException {
         Optional<Item> item = itemRepository.findById(id);
 
@@ -201,7 +198,7 @@ public class ItemService {
             Item updateItem = new Item();
             updateItem.setId(id);
             updateItem.setUser(item.get().getUser());
-            updateItem.setRequest(item.get().getRequest());
+            updateItem.setRequestId(item.get().getRequestId());
 
             if (itemCreationDto.getName() != null) {
                 updateItem.setName(itemCreationDto.getName());
@@ -247,7 +244,8 @@ public class ItemService {
         }
     }
 
-    public CommentDto addComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) {
+    public CommentDto addComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) throws ValidationException,
+            NotFoundException {
         validateComment(userId, itemId, commentCreationDto);
         commentCreationDto.setItemId(itemId);
         commentCreationDto.setAuthor(userService.getUserById(userId));
@@ -275,7 +273,8 @@ public class ItemService {
         User user = userService.getUserById(userId);
     }
 
-    public void validateComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) throws ValidationException {
+    public void validateComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) throws ValidationException,
+            NotFoundException {
         if (commentCreationDto.getText() == null || commentCreationDto.getText().isBlank()) {
             log.info("Поле text отсутствует или пусто.");
             throw new ValidationException("Поле text отсутствует или пусто.");
@@ -286,11 +285,11 @@ public class ItemService {
         if (!item.isPresent()) {
             log.info("Вещь не найдена.");
             throw new NotFoundException(String.format(
-                    "Вещь не найдена"));
+                    "Вещь не найдена."));
         }
 
         String state = "PAST";
-        List<BookingDto> bookingsDto = bookingService.getBookingsByBookerId(userId, state);
+        List<BookingDto> bookingsDto = bookingService.getBookingsByBookerId(userId, state, 0, 100);
         boolean isUserEndUsedItem = false;
 
         if (!bookingsDto.isEmpty()) {

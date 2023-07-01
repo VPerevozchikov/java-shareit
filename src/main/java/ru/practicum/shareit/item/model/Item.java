@@ -24,7 +24,7 @@ public class Item {
     @JoinColumn(name = "owner_id")
     User user;
     @Column(name = "request_id")
-    Long request;
+    Long requestId;
 
     public Item() {
     }

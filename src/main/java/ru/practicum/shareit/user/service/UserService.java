@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.dto.UserCreationDto;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 @Service
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
@@ -94,7 +96,7 @@ public class UserService {
                 updateUser.setEmail(userCreationDto.getEmail());
             }
             userRepository.save(updateUser);
-            UserDto userDto = userMapper.toDto(user);
+            UserDto userDto = userMapper.toDto(userRepository.findById(id));
             return userDto;
         } else {
             throw new NotFoundException(String.format(

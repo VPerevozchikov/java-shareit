@@ -21,9 +21,15 @@ public interface BookingService {
     BookingDto getBookingById(Long userId,
                               Long bookingId) throws NotFoundException;
 
-    List<BookingDto> getBookingsByBookerId(Long bookerId, String state) throws ValidationException;
+    List<BookingDto> getBookingsByBookerId(Long bookerId,
+                                           String state,
+                                           Integer from,
+                                           Integer size) throws ValidationException;
 
-    List<BookingDto> getBookingsByOwnerId(Long ownerId, String state) throws ValidationException;
+    List<BookingDto> getBookingsByOwnerId(Long ownerId,
+                                          String state,
+                                          Integer from,
+                                          Integer size) throws ValidationException;
 
     List<Booking> getBookingsByItemId(Long itemId);
 }

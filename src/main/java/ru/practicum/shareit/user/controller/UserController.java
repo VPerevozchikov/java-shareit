@@ -10,7 +10,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
 import java.util.List;
 
 @RestController
@@ -32,7 +31,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserCreationDto userCreationDto)
-            throws ValidationException {
+            throws RuntimeException {
         log.info("Запрос на добавление пользователя");
         return new ResponseEntity<>(userService.addUser(userCreationDto), HttpStatus.CREATED);
     }

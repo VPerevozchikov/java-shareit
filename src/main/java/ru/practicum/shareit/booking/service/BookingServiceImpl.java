@@ -2,7 +2,10 @@ package ru.practicum.shareit.booking.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.StatusType;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -12,7 +15,6 @@ import ru.practicum.shareit.booking.repositories.BookingRepository;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationBookingStatusException;
 import ru.practicum.shareit.exceptions.ValidationException;
-import ru.practicum.shareit.item.controller.ItemController;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repositories.ItemRepository;
@@ -24,10 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 @Service
 public class BookingServiceImpl implements BookingService {
-    //  ItemService itemService;
-    private static final Logger log = LoggerFactory.getLogger(ItemController.class);
+    private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
     ItemRepository itemRepository;
     BookingRepository bookingRepository;
     ItemMapper itemMapper;
@@ -46,7 +48,6 @@ public class BookingServiceImpl implements BookingService {
         this.bookingRepository = bookingRepository;
         this.bookingMapper = bookingMapper;
         this.userService = userService;
-        //    this.itemService = itemService;
     }
 
     @Override
@@ -65,7 +66,8 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.save(newBooking);
         count++;
 
-        BookingDto bookingDto = bookingMapper.toDto(bookingRepository.findById(count),
+        BookingDto bookingDto = bookingMapper.toDto(
+                bookingRepository.findById(count),
                 itemMapper.toItem(itemRepository.findById(bookingCreationDto.getItemId())));
         return bookingDto;
     }
@@ -96,28 +98,42 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto getBookingById(Long userId, Long bookingId) throws NotFoundException {
         validateRequest(userId, bookingId);
         Optional<Booking> booking = bookingRepository.findById(bookingId);
+        Optional<Item> item = itemRepository.findById(booking.get().getItemId());
 
         BookingDto bookingDto = bookingMapper.toDto(booking,
-                itemMapper.toItem(itemRepository.findById(booking.get().getItemId())));
+                itemMapper.toItem(item));
         return bookingDto;
     }
 
     @Override
-    public List<BookingDto> getBookingsByBookerId(Long bookerId, String state) throws ValidationException,
+    public List<BookingDto> getBookingsByBookerId(Long bookerId,
+                                                  String state,
+                                                  Integer from,
+                                                  Integer size) throws ValidationException,
             ValidationBookingStatusException {
         validateRequestBookingsByBookerOrOwnerId(bookerId);
         validateState(state);
+        validatePageQuery(from, size);
         List<BookingDto> bookingsDto = new ArrayList<>();
 
+        PageRequest pageRequest = PageRequest.of(from > 0 ? from / size : 0, size);
+
         if (state.equals("ALL")) {
-            List<Optional<Booking>> bookings = bookingRepository.findBookersByBookerId(bookerId);
+            Page<Booking> bookings = bookingRepository.findBookersByBookerId(bookerId, pageRequest);
+
+            bookings.forEach((booking) -> bookingsDto.add(bookingMapper.toDto(booking,
+                    itemMapper.toItem(itemRepository.findById(booking.getItemId())))));
+        }
+
+        if (state.equals("WAITING")) {
+            List<Optional<Booking>> bookings = bookingRepository.findBookersByBookerIdAndTypicalStatus(bookerId, state);
             for (Optional<Booking> booking : bookings) {
                 bookingsDto.add(bookingMapper.toDto(booking,
                         itemMapper.toItem(itemRepository.findById(booking.get().getItemId()))));
             }
         }
 
-        if (state.equals("WAITING") || state.equals("REJECTED")) {
+        if (state.equals("REJECTED")) {
             List<Optional<Booking>> bookings = bookingRepository.findBookersByBookerIdAndTypicalStatus(bookerId, state);
             for (Optional<Booking> booking : bookings) {
                 bookingsDto.add(bookingMapper.toDto(booking,
@@ -156,21 +172,35 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getBookingsByOwnerId(Long ownerId, String state) throws ValidationException,
+    public List<BookingDto> getBookingsByOwnerId(Long ownerId,
+                                                 String state,
+                                                 Integer from,
+                                                 Integer size) throws ValidationException,
             ValidationBookingStatusException {
         validateRequestBookingsByBookerOrOwnerId(ownerId);
         validateState(state);
+        validatePageQuery(from, size);
         List<BookingDto> bookingsDto = new ArrayList<>();
 
+        PageRequest pageRequest = PageRequest.of(from > 0 ? from / size : 0, size);
+
         if (state.equals("ALL")) {
-            List<Optional<Booking>> bookings = bookingRepository.findBookingsByOwnerId(ownerId);
+            Page<Booking> bookings = bookingRepository.findBookingsByOwnerId(ownerId, pageRequest);
+            for (Booking booking : bookings) {
+                bookingsDto.add(bookingMapper.toDto(booking,
+                        itemMapper.toItem(itemRepository.findById(booking.getItemId()))));
+            }
+        }
+
+        if (state.equals("WAITING")) {
+            List<Optional<Booking>> bookings = bookingRepository.findBookersByOwnerIdAndTypicalStatus(ownerId, state);
             for (Optional<Booking> booking : bookings) {
                 bookingsDto.add(bookingMapper.toDto(booking,
                         itemMapper.toItem(itemRepository.findById(booking.get().getItemId()))));
             }
         }
 
-        if (state.equals("WAITING") || state.equals("REJECTED")) {
+        if (state.equals("REJECTED")) {
             List<Optional<Booking>> bookings = bookingRepository.findBookersByOwnerIdAndTypicalStatus(ownerId, state);
             for (Optional<Booking> booking : bookings) {
                 bookingsDto.add(bookingMapper.toDto(booking,
@@ -309,7 +339,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (!booking.isPresent()) {
             throw new NotFoundException(String.format(
-                    "Хозяин вещи и/или вещь не найдены"));
+                    "Бронь не найдена."));
         }
 
         Optional<Item> item = itemRepository.findById(booking.get().getItemId());
@@ -335,6 +365,19 @@ public class BookingServiceImpl implements BookingService {
                 && !state.equals("REJECTED")) {
             throw new ValidationBookingStatusException(String.format(
                     "Unknown state: UNSUPPORTED_STATUS"));
+        }
+    }
+
+    public void validatePageQuery(Integer from, Integer size) throws ValidationException {
+        if (from < 0) {
+            log.info("Валидация запроса на получение запросов других пользователей.");
+            throw new ValidationException(String.format(
+                    "Отрицательный параметр запроса from"));
+        }
+        if (size <= 0) {
+            log.info("Валидация запроса на получение запросов других пользователей.");
+            throw new ValidationException(String.format(
+                    "Отрицательный или ноль параметр запроса size"));
         }
     }
 }

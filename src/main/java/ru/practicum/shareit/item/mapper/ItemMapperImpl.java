@@ -19,11 +19,7 @@ public class ItemMapperImpl implements ItemMapper {
         itemDto.setDescription(item.getDescription());
         itemDto.setAvailable(item.getAvailable());
         itemDto.setUser(item.getUser());
-        if (itemDto.getRequest() != null) {
-            itemDto.setRequest(itemDto.getRequest());
-        } else {
-            itemDto.setRequest(null);
-        }
+        itemDto.setRequestId(item.getRequestId());
         return itemDto;
     }
 
@@ -37,9 +33,7 @@ public class ItemMapperImpl implements ItemMapper {
             itemDto.setDescription(item.get().getDescription());
             itemDto.setAvailable(item.get().getAvailable());
             itemDto.setUser(item.get().getUser());
-            if (item.get().getRequest() != null) {
-                itemDto.setRequest(item.get().getRequest());
-            }
+            itemDto.setRequestId(item.get().getRequestId());
             return itemDto;
         } else {
             throw new NotFoundException(String.format(
@@ -54,7 +48,7 @@ public class ItemMapperImpl implements ItemMapper {
         item.setDescription(itemCreationDto.getDescription());
         item.setAvailable(itemCreationDto.getAvailable());
         item.setUser(itemCreationDto.getUser());
-        item.setRequest(itemCreationDto.getRequest());
+        item.setRequestId(itemCreationDto.getRequestId());
         return item;
     }
 
@@ -66,7 +60,7 @@ public class ItemMapperImpl implements ItemMapper {
         item.setDescription(itemFromOptional.get().getDescription());
         item.setAvailable(itemFromOptional.get().getAvailable());
         item.setUser(itemFromOptional.get().getUser());
-        item.setRequest(itemFromOptional.get().getRequest());
+        item.setRequestId(itemFromOptional.get().getRequestId());
         return item;
     }
 }
