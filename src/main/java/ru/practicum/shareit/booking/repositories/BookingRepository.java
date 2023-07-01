@@ -55,10 +55,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "order by bk.start_date DESC", nativeQuery = true)
     List<Optional<Booking>> findBookingsByOwnerId(Long ownerId);
 
-    @Query(value = "select * from bookings as bk " +
-            "join items as i on bk.item_id = i.id " +
-            "where i.owner_id = ? " +
-            "order by bk.start_date DESC", nativeQuery = true)
+    @Query(value = "select * from bookings " +
+//            "join items as i on bookings.item_id = i.id " +
+//            "where i.owner_id = ?1 " +
+            "order by start_date DESC", nativeQuery = true)
     Page<Booking> findBookingsByOwnerId(Long ownerId, Pageable pageable);
 
     @Query(value = "select * from bookings as bk " +
