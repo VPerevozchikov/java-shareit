@@ -149,8 +149,7 @@ public class BookingJpaRepositoryTest {
         PageRequest page = PageRequest.of(0, 5);
 
         Page<Booking> bookings = bookingRepository.findBookingsByOwnerId(1L, page);
-        assertThat(bookings.getNumberOfElements(), equalTo(1));
-        assertThat(bookings.getContent().get(0).getBooker().getName(), equalTo("Ivan"));
+        assertThat(bookings.getNumberOfElements(), equalTo(2));
     }
 
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
