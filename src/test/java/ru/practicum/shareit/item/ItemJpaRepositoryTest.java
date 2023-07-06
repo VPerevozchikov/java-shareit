@@ -19,11 +19,10 @@ import static org.hamcrest.Matchers.equalTo;
 
 @DataJpaTest
 public class ItemJpaRepositoryTest {
-
-    public User userOne;
-    public User userTwo;
-    public Item itemOne;
-    public Item itemTwo;
+    private User userOne;
+    private User userTwo;
+    private Item itemOne;
+    private Item itemTwo;
 
     @Autowired
     private ItemRepository itemRepository;

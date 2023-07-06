@@ -9,6 +9,7 @@ import ru.practicum.shareit.request.dto.ItemRequestCreationDto;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.service.ItemRequestService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 
@@ -16,16 +17,15 @@ import java.util.List;
 @RequestMapping(path = "/requests")
 public class ItemRequestController {
     private static final Logger log = LoggerFactory.getLogger(ItemRequestController.class);
-    ItemRequestService itemRequestService;
+    private final ItemRequestService itemRequestService;
 
     public ItemRequestController(ItemRequestService itemRequestService) {
         this.itemRequestService = itemRequestService;
     }
 
     @PostMapping
-    public ResponseEntity<ItemRequestDto> addItemRequest(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                         @RequestBody ItemRequestCreationDto itemRequestCreationDto)
-            throws RuntimeException {
+    public ResponseEntity<ItemRequestDto> addItemRequest(@Valid @RequestHeader("X-Sharer-User-Id") long userId,
+                                                         @RequestBody ItemRequestCreationDto itemRequestCreationDto) {
         log.info("Запрос на создание запроса вещи.");
         return new ResponseEntity<>(itemRequestService.addItemRequest(userId, itemRequestCreationDto), HttpStatus.CREATED);
     }

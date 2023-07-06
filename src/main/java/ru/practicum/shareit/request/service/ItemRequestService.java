@@ -9,15 +9,11 @@ import java.util.List;
 
 public interface ItemRequestService {
     ItemRequestDto addItemRequest(Long userId,
-                                  ItemRequestCreationDto itemRequestCreationDto) throws ValidationException,
-            NotFoundException;
+                                  ItemRequestCreationDto itemRequestCreationDto);
 
-    List<ItemRequestDto> getItemRequestsByUserId(Long userId) throws ValidationException,
-            NotFoundException;
+    List<ItemRequestDto> getItemRequestsByUserId(Long userId);
 
-    List<ItemRequestDto> getRequestsByAnotherUsers(Long userId, Integer from, Integer size) throws ValidationException,
-            NotFoundException;
+    List<ItemRequestDto> getRequestsByAnotherUsers(Long userId, Integer from, Integer size);
 
-    ItemRequestDto getItemRequestById(Long userId, Long itemRequestId) throws ValidationException,
-            NotFoundException;
+    ItemRequestDto getItemRequestById(Long userId, Long itemRequestId);
 }

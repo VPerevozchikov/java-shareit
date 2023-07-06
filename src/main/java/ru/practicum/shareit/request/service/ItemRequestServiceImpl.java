@@ -27,12 +27,12 @@ import java.util.Optional;
 @Service
 public class ItemRequestServiceImpl implements ItemRequestService {
     private static final Logger log = LoggerFactory.getLogger(ItemRequestServiceImpl.class);
-    ItemRepository itemRepository;
-    ItemRequestRepository itemRequestRepository;
-    ItemMapper itemMapper;
-    ItemRequestMapper itemRequestMapper;
-    UserService userService;
-    Long count = 0L;
+    private final ItemRepository itemRepository;
+    private final ItemRequestRepository itemRequestRepository;
+    private final ItemMapper itemMapper;
+    private final ItemRequestMapper itemRequestMapper;
+    private final UserService userService;
+    private Long count = 0L;
 
     public ItemRequestServiceImpl(ItemRepository itemRepository,
                                   ItemRequestRepository itemRequestRepository,
@@ -49,8 +49,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDto addItemRequest(Long userId,
-                                         ItemRequestCreationDto itemRequestCreationDto) throws ValidationException,
-            NotFoundException {
+                                         ItemRequestCreationDto itemRequestCreationDto) {
         validateNewItemRequest(userId, itemRequestCreationDto);
         itemRequestCreationDto.setRequestor(userId);
         itemRequestCreationDto.setCreated(LocalDateTime.now());
@@ -69,8 +68,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> getItemRequestsByUserId(Long userId) throws ValidationException,
-            NotFoundException {
+    @Transactional(readOnly = true)
+    public List<ItemRequestDto> getItemRequestsByUserId(Long userId) {
         User user = userService.getUserById(userId);
         List<Optional<ItemRequest>> itemRequests = itemRequestRepository.findItemRequestsByUserId(userId);
 
@@ -78,8 +77,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> getRequestsByAnotherUsers(Long userId, Integer from, Integer size) throws ValidationException,
-            NotFoundException {
+    @Transactional(readOnly = true)
+    public List<ItemRequestDto> getRequestsByAnotherUsers(Long userId, Integer from, Integer size) {
         validateRequestOnGetRequestsByAnotherUsers(userId, from, size);
 
         List<Optional<ItemRequest>> itemRequests = itemRequestRepository.findItemRequestsByAnotherUsers(userId, from, size);
@@ -88,8 +87,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public ItemRequestDto getItemRequestById(Long userId, Long itemRequestId) throws ValidationException,
-            NotFoundException {
+    @Transactional(readOnly = true)
+    public ItemRequestDto getItemRequestById(Long userId, Long itemRequestId) {
         validateRequestOnGetRequestById(userId, itemRequestId);
         List<ItemDto> items = new ArrayList<>();
         Optional<ItemRequest> itemRequest = itemRequestRepository.findById(itemRequestId);
@@ -103,9 +102,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         return itemRequestMapper.toDto(itemRequest, items);
     }
 
-    public void validateNewItemRequest(Long userId, ItemRequestCreationDto itemRequestCreationDto) throws ValidationException,
-            NotFoundException {
-
+    public void validateNewItemRequest(Long userId, ItemRequestCreationDto itemRequestCreationDto) {
         User user = userService.getUserById(userId);
 
         if (itemRequestCreationDto.getDescription() == null
@@ -116,9 +113,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         }
     }
 
-    public void validateRequestOnGetRequestsByAnotherUsers(Long userId, Integer from, Integer size) throws ValidationException,
-            NotFoundException {
-
+    public void validateRequestOnGetRequestsByAnotherUsers(Long userId, Integer from, Integer size) {
         User user = userService.getUserById(userId);
 
         if (from < 0) {
@@ -133,12 +128,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         }
     }
 
-    public void validateRequestOnGetRequestById(Long userId, Long itemRequestId) throws ValidationException,
-            NotFoundException {
-
+    public void validateRequestOnGetRequestById(Long userId, Long itemRequestId) {
         User user = userService.getUserById(userId);
         Optional<ItemRequest> itemRequest = itemRequestRepository.findById(itemRequestId);
-
 
         if (!itemRequest.isPresent()) {
             log.info("Валидация запроса на получение запросов других пользователей.");

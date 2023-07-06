@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -89,7 +90,7 @@ public class RequestControllerTest {
     @Test
     void addItemRequestTest() {
         long userId = 1L;
-        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(itemRequestOne, items);
+        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(Optional.of(itemRequestOne), items);
 
         when(itemRequestService.addItemRequest(any(), any()))
                 .thenReturn(itemRequestDto);
@@ -113,7 +114,7 @@ public class RequestControllerTest {
     @Test
     void getItemRequestByUserIdTest() {
         long userId = 1L;
-        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(itemRequestOne, items);
+        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(Optional.of(itemRequestOne), items);
         List<ItemRequestDto> itemRequestsDto = new ArrayList<>();
         itemRequestsDto.add(itemRequestDto);
 
@@ -135,7 +136,7 @@ public class RequestControllerTest {
     @Test
     void getItemRequestByAnotherUsersTest() {
         long userId = 1L;
-        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(itemRequestOne, items);
+        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(Optional.of(itemRequestOne), items);
         List<ItemRequestDto> itemRequestsDto = new ArrayList<>();
         itemRequestsDto.add(itemRequestDto);
 
@@ -159,7 +160,7 @@ public class RequestControllerTest {
     @Test
     void getItemRequestByIdTest() {
         long userId = 1L;
-        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(itemRequestOne, items);
+        ItemRequestDto itemRequestDto = itemRequestMapper.toDto(Optional.of(itemRequestOne), items);
 
         when(itemRequestService.getItemRequestById(any(), any()))
                 .thenReturn(itemRequestDto);

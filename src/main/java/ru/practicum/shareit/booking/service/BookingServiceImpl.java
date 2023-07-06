@@ -30,12 +30,12 @@ import java.util.Optional;
 @Service
 public class BookingServiceImpl implements BookingService {
     private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
-    ItemRepository itemRepository;
-    BookingRepository bookingRepository;
-    ItemMapper itemMapper;
-    BookingMapper bookingMapper;
-    UserService userService;
-    Long count = 0L;
+    private final ItemRepository itemRepository;
+    private final BookingRepository bookingRepository;
+    private final ItemMapper itemMapper;
+    private final BookingMapper bookingMapper;
+    private final UserService userService;
+    private Long count = 0L;
 
     public BookingServiceImpl(ItemRepository itemRepository,
                               ItemMapper itemMapper,
@@ -52,8 +52,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto addBooking(Long userId,
-                                 BookingCreationDto bookingCreationDto) throws ValidationException,
-            NotFoundException {
+                                 BookingCreationDto bookingCreationDto) {
 
         validateNewBooking(userId, bookingCreationDto);
         bookingCreationDto.setBooker(userService.getUserById(userId));
@@ -73,8 +72,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDto approveBooking(Long userId, Long bookingId, String approved) throws NotFoundException,
-            ValidationException {
+    public BookingDto approveBooking(Long userId, Long bookingId, String approved) {
         validateApproved(userId, bookingId, approved);
 
         Optional<Booking> bookingFromOptional = bookingRepository.findById(bookingId);
@@ -95,7 +93,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDto getBookingById(Long userId, Long bookingId) throws NotFoundException {
+    @Transactional(readOnly = true)
+    public BookingDto getBookingById(Long userId, Long bookingId) {
         validateRequest(userId, bookingId);
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         Optional<Item> item = itemRepository.findById(booking.get().getItemId());
@@ -106,11 +105,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getBookingsByBookerId(Long bookerId,
                                                   String state,
                                                   Integer from,
-                                                  Integer size) throws ValidationException,
-            ValidationBookingStatusException {
+                                                  Integer size) {
         validateRequestBookingsByBookerOrOwnerId(bookerId);
         validateState(state);
         validatePageQuery(from, size);
@@ -172,11 +171,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getBookingsByOwnerId(Long ownerId,
                                                  String state,
                                                  Integer from,
-                                                 Integer size) throws ValidationException,
-            ValidationBookingStatusException {
+                                                 Integer size) {
         validateRequestBookingsByBookerOrOwnerId(ownerId);
         validateState(state);
         validatePageQuery(from, size);
@@ -239,6 +238,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Booking> getBookingsByItemId(Long itemId) {
         List<Optional<Booking>> listOfBookingsByItemId = bookingRepository.findBookingByItemIdOrderByStartDesc(itemId);
         List<Booking> listOfBookings = new ArrayList<>();
@@ -248,8 +248,7 @@ public class BookingServiceImpl implements BookingService {
         return listOfBookings;
     }
 
-    public void validateNewBooking(Long userId, BookingCreationDto bookingCreationDto) throws ValidationException,
-            NotFoundException {
+    public void validateNewBooking(Long userId, BookingCreationDto bookingCreationDto) {
 
         User user = userService.getUserById(userId);
 
@@ -300,8 +299,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    public void validateApproved(Long userId, Long bookingId, String approved) throws NotFoundException,
-            ValidationException {
+    public void validateApproved(Long userId, Long bookingId, String approved) {
 
         User user = userService.getUserById(userId);
 
@@ -330,7 +328,7 @@ public class BookingServiceImpl implements BookingService {
 
     }
 
-    public void validateRequest(Long userId, Long bookingId) throws NotFoundException {
+    public void validateRequest(Long userId, Long bookingId) {
 
         User user = userService.getUserById(userId);
 
@@ -352,7 +350,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    public void validateRequestBookingsByBookerOrOwnerId(Long bookerId) throws ValidationException {
+    public void validateRequestBookingsByBookerOrOwnerId(Long bookerId) {
         User user = userService.getUserById(bookerId);
     }
 
@@ -368,7 +366,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    public void validatePageQuery(Integer from, Integer size) throws ValidationException {
+    public void validatePageQuery(Integer from, Integer size) {
         if (from < 0) {
             log.info("Валидация запроса на получение запросов других пользователей.");
             throw new ValidationException(String.format(

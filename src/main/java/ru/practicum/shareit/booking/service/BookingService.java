@@ -10,26 +10,24 @@ import java.util.List;
 
 public interface BookingService {
     BookingDto addBooking(Long userId,
-                          BookingCreationDto bookingCreationDto) throws ValidationException,
-            NotFoundException;
+                          BookingCreationDto bookingCreationDto);
 
     BookingDto approveBooking(Long userId,
                               Long bookingId,
-                              String approved) throws NotFoundException,
-            ValidationException;
+                              String approved);
 
     BookingDto getBookingById(Long userId,
-                              Long bookingId) throws NotFoundException;
+                              Long bookingId);
 
     List<BookingDto> getBookingsByBookerId(Long bookerId,
                                            String state,
                                            Integer from,
-                                           Integer size) throws ValidationException;
+                                           Integer size);
 
     List<BookingDto> getBookingsByOwnerId(Long ownerId,
                                           String state,
                                           Integer from,
-                                          Integer size) throws ValidationException;
+                                          Integer size);
 
     List<Booking> getBookingsByItemId(Long itemId);
 }

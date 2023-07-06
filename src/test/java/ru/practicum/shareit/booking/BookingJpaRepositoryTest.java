@@ -24,19 +24,17 @@ import static org.hamcrest.Matchers.equalTo;
 
 @DataJpaTest
 public class BookingJpaRepositoryTest {
-    public User userOne;
-    public User userTwo;
-    public Item itemOne;
-    public Item itemTwo;
-
-    public Booking bookingOne;
-    public Booking bookingTwo;
+    private User userOne;
+    private User userTwo;
+    private Item itemOne;
+    private Item itemTwo;
+    private Booking bookingOne;
+    private Booking bookingTwo;
 
     @Autowired
     private ItemRepository itemRepository;
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private BookingRepository bookingRepository;
 

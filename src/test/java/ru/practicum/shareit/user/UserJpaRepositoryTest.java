@@ -14,8 +14,8 @@ import static org.hamcrest.Matchers.equalTo;
 
 @DataJpaTest
 public class UserJpaRepositoryTest {
-    public User userOne;
-    public User userTwo;
+    private User userOne;
+    private User userTwo;
     @Autowired
     private UserRepository userRepository;
 

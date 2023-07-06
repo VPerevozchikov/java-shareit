@@ -29,7 +29,7 @@ public class RequestServiceIntegrationTest {
     private final UserService userService;
     private final ItemService itemService;
     private final ItemRequestService itemRequestService;
-    public UserCreationDto userCreationDtoOne;
+    private UserCreationDto userCreationDtoOne;
     private ItemRequestCreationDto itemRequestCreationDtoOne;
     private ItemCreationDto itemCreationDtoOne;
 

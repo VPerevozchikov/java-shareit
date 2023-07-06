@@ -34,10 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = UserController.class)
 public class UserControllerTest {
-    UserCreationDto userCreationDtoOne;
-    UserMapper userMapper;
-    User userOne;
-    UserDto userDtoOne;
+    private UserCreationDto userCreationDtoOne;
+    private UserMapper userMapper;
+    private User userOne;
+    private UserDto userDtoOne;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired

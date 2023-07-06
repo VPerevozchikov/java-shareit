@@ -34,8 +34,8 @@ public class BookingServiceIntegrationTest {
     private final UserService userService;
     private final ItemService itemService;
     private final BookingService bookingService;
-    public UserCreationDto userCreationDtoOne;
-    public UserCreationDto userCreationDtoTwo;
+    private UserCreationDto userCreationDtoOne;
+    private UserCreationDto userCreationDtoTwo;
     private ItemCreationDto itemCreationDtoOne;
     private ItemCreationDto itemCreationDtoTwo;
     private ItemCreationDto itemCreationDtoThree;

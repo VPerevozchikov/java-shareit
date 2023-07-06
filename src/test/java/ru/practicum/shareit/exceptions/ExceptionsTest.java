@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ExceptionsTest {
-    ErrorHandler errorHandler = new ErrorHandler();
+    private ErrorHandler errorHandler = new ErrorHandler();
 
     @Test
     void handleNotFoundExceptionTest() {

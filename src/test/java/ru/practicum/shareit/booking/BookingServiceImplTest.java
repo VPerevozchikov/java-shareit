@@ -50,7 +50,6 @@ public class BookingServiceImplTest {
     private Booking bookingRejected;
     private Booking bookingFuture;
     private Booking bookingCurrent;
-
     private List<Booking> listOfAllBookings;
     private Booking bookingWrong;
     private ItemMapper itemMapper;

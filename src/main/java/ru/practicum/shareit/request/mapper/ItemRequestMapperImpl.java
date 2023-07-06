@@ -14,17 +14,6 @@ import java.util.Optional;
 public class ItemRequestMapperImpl implements ItemRequestMapper {
 
     @Override
-    public ItemRequestDto toDto(ItemRequest itemRequest, List<ItemDto> items) {
-        ItemRequestDto itemRequestDto = new ItemRequestDto();
-        itemRequestDto.setId(itemRequest.getId());
-        itemRequestDto.setDescription(itemRequest.getDescription());
-        itemRequestDto.setRequestor(itemRequest.getRequestor());
-        itemRequestDto.setCreated(itemRequest.getCreated());
-        itemRequestDto.setItems(items);
-        return itemRequestDto;
-    }
-
-    @Override
     public ItemRequestDto toDto(Optional<ItemRequest> itemRequest, List<ItemDto> items) {
         if (itemRequest.isPresent()) {
             ItemRequestDto itemRequestDto = new ItemRequestDto();

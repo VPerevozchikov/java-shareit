@@ -20,15 +20,15 @@ import java.util.Optional;
 @Service
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-    UserRepository userRepository;
-    UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public UserService(UserRepository userRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
     }
 
-    public UserDto addUser(UserCreationDto userCreationDto) throws ValidationException {
+    public UserDto addUser(UserCreationDto userCreationDto) {
         validateNewUser(userCreationDto);
         userRepository.save(
                 new User(userCreationDto.getName(), userCreationDto.getEmail()));
@@ -37,7 +37,7 @@ public class UserService {
         return userDto;
     }
 
-    public void deleteUser(Long id) throws NotFoundException {
+    public void deleteUser(Long id) {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isPresent()) {
@@ -48,7 +48,8 @@ public class UserService {
         }
     }
 
-    public UserDto getUserDtoById(Long id) throws NotFoundException {
+    @Transactional(readOnly = true)
+    public UserDto getUserDtoById(Long id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
             UserDto userDto = userMapper.toDto(user);
@@ -59,7 +60,8 @@ public class UserService {
         }
     }
 
-    public User getUserById(Long id) throws NotFoundException {
+    @Transactional(readOnly = true)
+    public User getUserById(Long id) {
         Optional<User> userOptional = userRepository.findById(id);
         if (userOptional.isPresent()) {
             User user = userMapper.toUser(userOptional);
@@ -70,6 +72,7 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<UserDto> getUsers() {
         List<UserDto> usersDto = new ArrayList<>();
         List<User> users = new ArrayList<>();
@@ -80,7 +83,7 @@ public class UserService {
         return usersDto;
     }
 
-    public UserDto updateUser(Long id, UserCreationDto userCreationDto) throws ValidationException {
+    public UserDto updateUser(Long id, UserCreationDto userCreationDto) {
 
         Optional<User> user = userRepository.findById(id);
 
@@ -104,7 +107,7 @@ public class UserService {
         }
     }
 
-    public void validateNewUser(UserCreationDto userCreationDto) throws ValidationException {
+    public void validateNewUser(UserCreationDto userCreationDto) {
         if (userCreationDto.getName() == null || userCreationDto.getName().isBlank()) {
             log.info("Ошибка в поле name{}: ", userCreationDto.getName());
             throw new ValidationException("Ошибка в наименовании пользователя.");

@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UserServiceIntegrationTest {
     private final UserService userService;
-    public UserCreationDto userCreationDtoOne;
-    public UserCreationDto userCreationDtoTwo;
+    private UserCreationDto userCreationDtoOne;
+    private UserCreationDto userCreationDtoTwo;
 
 
     @BeforeEach

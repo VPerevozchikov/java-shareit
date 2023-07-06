@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ItemRequestMapper {
-    ItemRequestDto toDto(ItemRequest itemRequest, List<ItemDto> items);
 
     ItemRequestDto toDto(Optional<ItemRequest> itemRequest, List<ItemDto> items);
 
