@@ -10,14 +10,14 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.item.controller.ItemController;
 
-import javax.validation.ValidationException;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/bookings")
 public class BookingController {
     private static final Logger log = LoggerFactory.getLogger(ItemController.class);
-    BookingService bookingService;
+    private final BookingService bookingService;
 
     public BookingController(BookingService bookingService) {
 
@@ -25,9 +25,8 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingDto> addBooking(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                 @RequestBody BookingCreationDto bookingCreationDto)
-            throws ValidationException {
+    public ResponseEntity<BookingDto> addBooking(@Valid @RequestHeader("X-Sharer-User-Id") long userId,
+                                                 @RequestBody BookingCreationDto bookingCreationDto) {
         log.info("Запрос на создание брони.");
         return new ResponseEntity<>(bookingService.addBooking(userId, bookingCreationDto), HttpStatus.CREATED);
     }
@@ -36,8 +35,7 @@ public class BookingController {
     public ResponseEntity<BookingDto> approveBooking(@RequestHeader("X-Sharer-User-Id") long userId,
                                                      @PathVariable long bookingId,
                                                      @RequestParam(value = "approved",
-                                                             required = true) String approved)
-            throws ValidationException {
+                                                             required = true) String approved) {
         log.info("Запрос на подтверждение брони.");
         return new ResponseEntity<>(bookingService.approveBooking(userId, bookingId, approved), HttpStatus.OK);
     }
@@ -53,17 +51,29 @@ public class BookingController {
     public ResponseEntity<List<BookingDto>> getBookingsByBookerId(@RequestHeader("X-Sharer-User-Id") long bookerId,
                                                                   @RequestParam(value = "state",
                                                                           required = false,
-                                                                          defaultValue = "ALL") String state) {
+                                                                          defaultValue = "ALL") String state,
+                                                                  @RequestParam(value = "from",
+                                                                          required = false,
+                                                                          defaultValue = "0") Integer from,
+                                                                  @RequestParam(value = "size",
+                                                                          required = false,
+                                                                          defaultValue = "20") Integer size) {
         log.info("Запрос на получение информации о бронях по пользователю.");
-        return new ResponseEntity<>(bookingService.getBookingsByBookerId(bookerId, state), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getBookingsByBookerId(bookerId, state, from, size), HttpStatus.OK);
     }
 
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getBookingByOwnerId(@RequestHeader("X-Sharer-User-Id") long ownerId,
                                                                 @RequestParam(value = "state",
                                                                         required = false,
-                                                                        defaultValue = "ALL") String state) {
+                                                                        defaultValue = "ALL") String state,
+                                                                @RequestParam(value = "from",
+                                                                        required = false,
+                                                                        defaultValue = "0") Integer from,
+                                                                @RequestParam(value = "size",
+                                                                        required = false,
+                                                                        defaultValue = "20") Integer size) {
         log.info("Запрос на получение информации о бронях по хозяину вещи.");
-        return new ResponseEntity<>(bookingService.getBookingsByOwnerId(ownerId, state), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getBookingsByOwnerId(ownerId, state, from, size), HttpStatus.OK);
     }
 }

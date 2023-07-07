@@ -3,12 +3,12 @@ package ru.practicum.shareit.item.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.StatusType;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.booking.service.BookingServiceImpl;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.CommentCreationDto;
@@ -27,18 +27,18 @@ import ru.practicum.shareit.user.service.UserService;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Transactional
 @Service
 public class ItemService {
     private static final Logger log = LoggerFactory.getLogger(ItemService.class);
-
-    ItemRepository itemRepository;
-    CommentRepository commentRepository;
-    ItemMapper itemMapper;
-    BookingMapper bookingMapper;
-    UserService userService;
-    BookingService bookingService;
-    Long countComment = 0L;
-    Comparator<ItemDto> comparator = new Comparator<ItemDto>() {
+    private final ItemRepository itemRepository;
+    private final CommentRepository commentRepository;
+    private final ItemMapper itemMapper;
+    private final BookingMapper bookingMapper;
+    private final UserService userService;
+    private final BookingService bookingService;
+    private Long countComment = 0L;
+    private Comparator<ItemDto> comparator = new Comparator<ItemDto>() {
         @Override
         public int compare(ItemDto i1, ItemDto i2) {
             return i1.getId().compareTo(i2.getId());
@@ -50,7 +50,7 @@ public class ItemService {
                        ItemMapper itemMapper,
                        BookingMapper bookingMapper,
                        UserService userService,
-                       BookingServiceImpl bookingService) {
+                       BookingService bookingService) {
 
         this.itemRepository = itemRepository;
         this.commentRepository = commentRepository;
@@ -60,7 +60,7 @@ public class ItemService {
         this.bookingService = bookingService;
     }
 
-    public ItemDto addItem(Long userId, ItemCreationDto itemCreationDto) throws ValidationException {
+    public ItemDto addItem(Long userId, ItemCreationDto itemCreationDto) {
 
         validate(userId, itemCreationDto);
         itemCreationDto.setUser(userService.getUserById(userId));
@@ -69,6 +69,7 @@ public class ItemService {
         return itemDto;
     }
 
+    @Transactional(readOnly = true)
     public ItemDto getItemById(Long userId, Long id) {
         User user = userService.getUserById(userId);
         Optional<Item> item = itemRepository.findById(id);
@@ -126,11 +127,7 @@ public class ItemService {
         }
     }
 
-    public Item getItemById(Long itemId) {
-        return itemMapper.toItem(itemRepository.findById(itemId));
-    }
-
-    public void deleteItem(Long id) throws NotFoundException {
+    public void deleteItem(Long id) {
         Optional<Item> item = itemRepository.findById(id);
 
         if (item.isPresent()) {
@@ -141,6 +138,7 @@ public class ItemService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Set<ItemDto> getItemsByUserId(Long userId) {
         User user = userService.getUserById(userId);
 
@@ -192,7 +190,7 @@ public class ItemService {
         return allItemsDtoSortedById;
     }
 
-    public ItemDto updateItem(Long userId, Long id, ItemCreationDto itemCreationDto) throws ValidationException {
+    public ItemDto updateItem(Long userId, Long id, ItemCreationDto itemCreationDto) {
 
         User user = userService.getUserById(userId);
         Optional<Item> item = itemRepository.findById(id);
@@ -201,7 +199,7 @@ public class ItemService {
             Item updateItem = new Item();
             updateItem.setId(id);
             updateItem.setUser(item.get().getUser());
-            updateItem.setRequest(item.get().getRequest());
+            updateItem.setRequestId(item.get().getRequestId());
 
             if (itemCreationDto.getName() != null) {
                 updateItem.setName(itemCreationDto.getName());
@@ -230,6 +228,7 @@ public class ItemService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<ItemDto> searchItem(Long userId, String text) {
 
         User user = userService.getUserById(userId);
@@ -257,7 +256,7 @@ public class ItemService {
         return commentDto;
     }
 
-    public void validate(Long userId, ItemCreationDto itemCreationDto) throws ValidationException {
+    public void validate(Long userId, ItemCreationDto itemCreationDto) {
         if (itemCreationDto.getName() == null || itemCreationDto.getName().isBlank()) {
             log.info("Поле name отсутствует или пусто.");
             throw new ValidationException("Поле name отсутствует или пусто.");
@@ -275,7 +274,7 @@ public class ItemService {
         User user = userService.getUserById(userId);
     }
 
-    public void validateComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) throws ValidationException {
+    public void validateComment(Long userId, Long itemId, CommentCreationDto commentCreationDto) {
         if (commentCreationDto.getText() == null || commentCreationDto.getText().isBlank()) {
             log.info("Поле text отсутствует или пусто.");
             throw new ValidationException("Поле text отсутствует или пусто.");
@@ -286,11 +285,11 @@ public class ItemService {
         if (!item.isPresent()) {
             log.info("Вещь не найдена.");
             throw new NotFoundException(String.format(
-                    "Вещь не найдена"));
+                    "Вещь не найдена."));
         }
 
         String state = "PAST";
-        List<BookingDto> bookingsDto = bookingService.getBookingsByBookerId(userId, state);
+        List<BookingDto> bookingsDto = bookingService.getBookingsByBookerId(userId, state, 0, 100);
         boolean isUserEndUsedItem = false;
 
         if (!bookingsDto.isEmpty()) {

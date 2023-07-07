@@ -10,14 +10,13 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
-    UserService userService;
+    private final UserService userService;
 
     public UserController(UserService userService) {
 
@@ -31,8 +30,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserCreationDto userCreationDto)
-            throws ValidationException {
+    public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserCreationDto userCreationDto) {
         log.info("Запрос на добавление пользователя");
         return new ResponseEntity<>(userService.addUser(userCreationDto), HttpStatus.CREATED);
     }

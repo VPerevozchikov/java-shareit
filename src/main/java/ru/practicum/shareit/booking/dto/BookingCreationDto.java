@@ -7,6 +7,7 @@ import lombok.ToString;
 import ru.practicum.shareit.booking.StatusType;
 import ru.practicum.shareit.user.model.User;
 
+import javax.validation.constraints.Future;
 import java.time.LocalDateTime;
 
 @Getter
@@ -14,7 +15,9 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 public class BookingCreationDto {
+    @Future
     LocalDateTime start;
+    @Future
     LocalDateTime end;
     Long itemId;
     User booker;

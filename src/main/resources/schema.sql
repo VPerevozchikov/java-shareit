@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS REQUESTS (
     id BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
     description varchar(512),
     requestor_id BIGINT,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     CONSTRAINT pk_request PRIMARY KEY (id)
 );
 
