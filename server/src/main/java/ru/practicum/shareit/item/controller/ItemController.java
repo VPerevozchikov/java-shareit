@@ -11,7 +11,6 @@ import ru.practicum.shareit.item.dto.ItemCreationDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Set;
 
@@ -50,7 +49,7 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<ItemDto> addItem(@RequestHeader("X-Sharer-User-Id") long userId,
-                                           @Valid @RequestBody ItemCreationDto itemCreationDto) {
+                                           @RequestBody ItemCreationDto itemCreationDto) {
         log.info("Запрос на создание вещи.");
         return new ResponseEntity<>(itemService.addItem(userId, itemCreationDto), HttpStatus.CREATED);
     }
@@ -72,7 +71,7 @@ public class ItemController {
     @PostMapping("/{itemId}/comment")
     public ResponseEntity<CommentDto> addComment(@RequestHeader("X-Sharer-User-Id") long userId,
                                                  @PathVariable long itemId,
-                                                 @Valid @RequestBody CommentCreationDto commentCreationDto) {
+                                                 @RequestBody CommentCreationDto commentCreationDto) {
         log.info("Запрос на создание комментария.");
         return new ResponseEntity<>(itemService.addComment(userId, itemId, commentCreationDto), HttpStatus.OK);
     }

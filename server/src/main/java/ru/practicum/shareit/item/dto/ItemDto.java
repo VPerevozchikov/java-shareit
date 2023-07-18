@@ -7,8 +7,6 @@ import lombok.ToString;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.user.model.User;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Getter
@@ -17,8 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ItemDto {
     Long id;
-    @NotNull
-    @NotBlank
+
     String name;
     String description;
     Boolean available;
